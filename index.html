@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>혼자서 — 나태주</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at 15% 5%,  #b8e060 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 5%,  #ccee80 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 40%, #f8f0e8 0%, transparent 55%),
+      radial-gradient(ellipse at 0%  90%, #fcd8dc 0%, transparent 50%),
+      radial-gradient(ellipse at 100% 90%, #fce8c0 0%, transparent 50%),
+      linear-gradient(165deg, #bce060 0%, #d0eb90 20%, #edf8c8 40%, #faf4ec 60%, #fde8ec 80%, #f8d4d8 100%);
+    font-family: 'Noto Serif KR', serif;
+    overflow-x: hidden;
+  }
+
+  /* ── CANVAS ── */
+  #canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* ── LAYOUT ── */
+  .page {
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    gap: 0;
+  }
+
+  /* ── TOP DECO ── */
+  .top-deco {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: riseIn 1.4s ease both;
+  }
+  .top-deco .season {
+    font-size: 0.7rem;
+    letter-spacing: 0.55em;
+    color: #5a8040;
+    font-weight: 300;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .top-deco .branch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .top-deco .branch::before,
+  .top-deco .branch::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #c8a0a8);
+  }
+  .top-deco .branch::after {
+    background: linear-gradient(90deg, #c8a0a8, transparent);
+  }
+
+  /* ── MAIN CARD ── */
+  .card {
+    max-width: 600px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.50);
+    backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(240, 190, 190, 0.40);
+    border-radius: 32px;
+    padding: 70px 64px 60px;
+    box-shadow:
+      0 2px 4px  rgba(180, 100, 100, 0.05),
+      0 12px 40px rgba(160,  90,  80, 0.10),
+      0 40px 80px rgba(200, 150, 120, 0.06),
+      inset 0 1px 0 rgba(255,255,255,0.75);
+    animation: riseIn 1.4s 0.15s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 배경 꽃 장식 */
+  .card::before {
+    content: '꽃';
+    position: absolute;
+    top: -18px; right: 20px;
+    font-size: 5rem;
+    opacity: 0.055;
+    transform: rotate(15deg);
+    pointer-events: none;
+    filter: blur(1px);
+  }
+  .card::after {
+    content: '🌸';
+    position: absolute;
+    bottom: 18px; left: 22px;
+    font-size: 3.5rem;
+    opacity: 0.10;
+    transform: rotate(-10deg) scale(1.2);
+    pointer-events: none;
+  }
+
+  /* ── TITLE AREA ── */
+  .poem-title {
+    font-family: 'Gowun Batang', serif;
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    font-weight: 700;
+    color: #3a2020;
+    text-align: center;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 20px rgba(140, 60, 60, 0.13);
+    animation: riseIn 1.4s 0.3s ease both;
+    opacity: 0;
+  }
+  .poem-author {
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 300;
+    letter-spacing: 0.4em;
+    color: #9a6060;
+    margin-bottom: 38px;
+    animation: riseIn 1.4s 0.45s ease both;
+    opacity: 0;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    display: flex; align-items: center; gap: 14px;
+    margin: 0 auto 40px;
+    max-width: 240px;
+    animation: riseIn 1.4s 0.55s ease both;
+    opacity: 0;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(210,140,150,0.55), transparent);
+  }
+  .divider span { font-size: 0.85rem; }
+
+  /* ── POEM ── */
+  .poem {
+    text-align: center;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.08rem;
+    font-weight: 400;
+    line-height: 2.5;
+    color: #3d2525;
+    margin-bottom: 44px;
+  }
+
+  .stanza {
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeStanza 1.0s ease both;
+  }
+  .stanza:nth-child(1) { animation-delay: 0.7s; }
+  .stanza:nth-child(2) { animation-delay: 1.05s; }
+  .stanza:nth-child(3) { animation-delay: 1.4s; }
+
+  .stanza em {
+    font-style: normal;
+    color: #b03a50;
+    font-weight: 600;
+  }
+  .stanza.last-stanza {
+    font-size: 1.12rem;
+    color: #2a1818;
+    font-weight: 600;
+    background: rgba(255, 220, 210, 0.18);
+    border-radius: 14px;
+    padding: 20px 24px;
+    border: 1px solid rgba(220, 150, 150, 0.22);
+    line-height: 2.2;
+  }
+
+  /* ── FOOTER TAG ── */
+  .tags {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    justify-content: center;
+    animation: riseIn 1.4s 1.8s ease both;
+    opacity: 0;
+  }
+  .tag {
+    font-size: 0.73rem;
+    font-weight: 300;
+    color: #9a6868;
+    background: rgba(255, 200, 195, 0.22);
+    border: 1px solid rgba(210, 155, 145, 0.30);
+    border-radius: 20px;
+    padding: 5px 15px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── BOTTOM DECO ── */
+  .bottom-deco {
+    margin-top: 52px;
+    text-align: center;
+    animation: riseIn 1.4s 2.0s ease both;
+    opacity: 0;
+  }
+  .bottom-deco .blossoms {
+    font-size: 1.25rem;
+    letter-spacing: 0.45em;
+    opacity: 0.4;
+    animation: sway 5s ease-in-out infinite;
+  }
+  .bottom-deco .tagline {
+    margin-top: 10px;
+    font-size: 0.70rem;
+    font-weight: 300;
+    letter-spacing: 0.35em;
+    color: #8a6060;
+    opacity: 0.7;
+  }
+
+  /* ── KEYFRAMES ── */
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeStanza {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes sway {
+    0%,100% { transform: translateY(0); }
+    40%     { transform: translateY(-6px) rotate(1deg); }
+    70%     { transform: translateY(-3px) rotate(-1deg); }
+  }
+
+  @media (max-width: 560px) {
+    .card { padding: 52px 32px 44px; }
+    .poem { font-size: 1rem; }
+  }
+
+  /* ── MUSIC BUTTON ── */
+  #music-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(220, 160, 160, 0.40);
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(14px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 18px rgba(180, 100, 100, 0.14);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  #music-btn:hover {
+    transform: scale(1.10);
+    background: rgba(255, 240, 240, 0.75);
+  }
+  #music-btn.playing {
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 18px rgba(180, 100, 100, 0.14); }
+    50%       { box-shadow: 0 4px 28px rgba(200, 100, 120, 0.35); }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<!-- 배경음악 -->
+<audio id="bgm" src="bg.mp3" loop preload="auto"></audio>
+<button id="music-btn" title="음악 켜기/끄기">🔇</button>
+
+<div class="page">
+
+  <div class="top-deco">
+    <div class="season">봄 · Spring · 2026</div>
+    <div class="branch"><span>🌿</span></div>
+  </div>
+
+  <div class="card">
+    <div class="poem-title">혼자서</div>
+    <div class="poem-author">— 나 태 주 —</div>
+
+    <div class="divider"><span>✿</span></div>
+
+    <div class="poem">
+      <div class="stanza">
+        무리 지어 피어 있는 꽃보다<br>
+        두셋이서 피어 있는 꽃이<br>
+        도란도란 더 <em>의초로울</em> 때 있다
+      </div>
+      <div class="stanza">
+        두셋이서 피어 있는 꽃보다<br>
+        오직 혼자서 피어 있는 꽃이<br>
+        더 <em>당당하고 아름다울</em> 때 있다
+      </div>
+      <div class="stanza last-stanza">
+        너 오늘 혼자 외롭게<br>
+        꽃으로 서 있음을 너무<br>
+        <em>힘들어하지 말아라</em>
+      </div>
+    </div>
+
+    <div class="tags">
+      <span class="tag">나태주 시인</span>
+      <span class="tag">풀꽃문학관</span>
+      <span class="tag">혼자서</span>
+      <span class="tag">한국 현대시</span>
+    </div>
+  </div>
+
+  <div class="bottom-deco">
+    <div class="blossoms">🌸 ✿ 🌸 ✿ 🌸</div>
+    <div class="tagline">혼자 피어도 아름답습니다</div>
+  </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// 꽃잎 색상 (연분홍 ~ 크림화이트)
+const palettes = [
+  ['#ffe0e8', '#ffc0cc', '#ffaabb'],
+  ['#ffd0da', '#ffb0be', '#ff9aae'],
+  ['#fff4f6', '#ffdde4', '#ffc8d2'],
+  ['#fde8d0', '#f8c8b0', '#f0b09a'],
+  ['#f0f8ff', '#ddeeff', '#c8ddf8'],
+];
+
+class Petal {
+  constructor(scatter) {
+    this.reset(scatter);
+  }
+  reset(scatter) {
+    this.startX   = Math.random() * W;
+    this.x        = this.startX;
+    this.y        = scatter ? Math.random() * H : -20;
+    this.vy       = Math.random() * 0.85 + 0.45;
+    this.angle    = Math.random() * Math.PI * 2;
+    this.va       = (Math.random() - 0.5) * 0.045;
+    this.size     = Math.random() * 8 + 5;
+    this.rx       = this.size * (0.38 + Math.random() * 0.28);
+    this.ry       = this.size;
+    this.alpha    = Math.random() * 0.38 + 0.42;
+    this.swayT    = Math.random() * Math.PI * 2;
+    this.swaySpd  = 0.009 + Math.random() * 0.022;
+    this.swayAmp  = 30 + Math.random() * 60;
+    this.pal      = palettes[Math.floor(Math.random() * palettes.length)];
+  }
+  update() {
+    this.swayT += this.swaySpd;
+    this.x      = this.startX + Math.sin(this.swayT) * this.swayAmp;
+    this.y     += this.vy;
+    this.angle += this.va;
+    if (this.y > H + 30) this.reset(false);
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+    ctx.globalAlpha = this.alpha;
+
+    const g = ctx.createRadialGradient(0, -this.ry * 0.25, 0.5, 0, 0, this.ry);
+    g.addColorStop(0,   '#fffafc');
+    g.addColorStop(0.4, this.pal[0]);
+    g.addColorStop(0.8, this.pal[1]);
+    g.addColorStop(1,   this.pal[2]);
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.rx, this.ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    // 맥
+    ctx.beginPath();
+    ctx.moveTo(0, -this.ry * 0.75);
+    ctx.bezierCurveTo(
+      this.rx * 0.4,  0,
+      this.rx * 0.4,  0,
+      0, this.ry * 0.75
+    );
+    ctx.strokeStyle = 'rgba(255,160,175,0.20)';
+    ctx.lineWidth   = 0.5;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+const petals = Array.from({length: 72}, (_, i) => new Petal(i < 50));
+
+function loop() {
+  ctx.clearRect(0, 0, W, H);
+  petals.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ── 배경음악 ──
+const bgm = document.getElementById('bgm');
+const btn = document.getElementById('music-btn');
+let playing = false;
+
+function startMusic() {
+  bgm.volume = 0;
+  bgm.play().then(() => {
+    playing = true;
+    btn.textContent = '🎵';
+    btn.classList.add('playing');
+    // 페이드인
+    let v = 0;
+    const fade = setInterval(() => {
+      v = Math.min(v + 0.02, 0.55);
+      bgm.volume = v;
+      if (v >= 0.55) clearInterval(fade);
+    }, 60);
+  }).catch(() => {});
+}
+
+function stopMusic() {
+  // 페이드아웃
+  let v = bgm.volume;
+  const fade = setInterval(() => {
+    v = Math.max(v - 0.03, 0);
+    bgm.volume = v;
+    if (v <= 0) {
+      clearInterval(fade);
+      bgm.pause();
+      bgm.currentTime = 0;
+      playing = false;
+      btn.textContent = '🔇';
+      btn.classList.remove('playing');
+    }
+  }, 60);
+}
+
+btn.addEventListener('click', () => {
+  if (playing) stopMusic();
+  else startMusic();
+});
+
+// 첫 번째 사용자 인터랙션 시 자동 시작 (브라우저 정책 대응)
+function autoStart() {
+  if (!playing) startMusic();
+  document.removeEventListener('click', autoStart);
+  document.removeEventListener('keydown', autoStart);
+  document.removeEventListener('touchstart', autoStart);
+}
+document.addEventListener('click', autoStart);
+document.addEventListener('keydown', autoStart);
+document.addEventListener('touchstart', autoStart);
+</script>
+</body>
+</html>
